@@ -109,6 +109,7 @@ document.getElementById('left-image').addEventListener('click', function(e) {
     let clickY = Math.round((e.clientY - rect.top) / rect.height * 100);
     alert("你點擊的位置係：\nx: " + clickX + "\ny: " + clickY);
 });
+
     <script>
         // 設定錯處嘅位置 (以圖片闊度/高度嘅百分比計算，例如 50% 即係正中間)
         // 咁樣設定，無論手機打橫定打直、螢幕幾大，個點擊位都唔會走位。
