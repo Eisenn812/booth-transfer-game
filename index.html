@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <!-- 針對手機螢幕最佳化，防止用家縮放 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Patient Transfer 找錯處挑戰</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 10px;
+            text-align: center;
+            color: #333;
+        }
+        h2 { margin-bottom: 5px; font-size: 20px; }
+        p { margin-top: 0; font-size: 14px; color: #666; }
+        
+        /* 左右並排顯示設定 */
+        .game-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .image-wrapper {
+            position: relative;
+            width: 49%; /* 左右各佔 49% */
+        }
+        
+        .image-wrapper img {
+            width: 100%;
+            display: block;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* 錯處標記（紅色圓圈），預設隱藏 */
+        .spot-marker {
+            position: absolute;
+            border: 3px solid red;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            display: none; /* 搵到先顯示 */
+            pointer-events: none; /* 避免阻擋點擊 */
+            box-shadow: 0 0 5px rgba(255,0,0,0.5);
+        }
+
+        /* 透明的觸控區域 (設定為百分比，確保手機縮放都禁得啱) */
+        .clickable-area {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            /* background-color: rgba(0, 255, 0, 0.3); /* 測試時可打開呢行，方便睇觸控位置 */
+        }
+
+        #status-bar {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #0056b3;
+        }
+
+        #success-message {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #d4edda;
+            color: #155724;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>危重病人運送：找錯處</h2>
+    <p>請比較左右兩圖，找出 3 個安全隱患（例如：Oxylog 紅燈、氧氣樽未開）</p>
+
+    <div class="game-container" id="game-board">
+        <!-- 左圖 (錯誤圖) -->
+        <div class="image-wrapper" id="left-image">
+            <img src="wrong-setup.jpg" alt="錯誤設定">
+            <!-- JavaScript 會喺度自動加入觸控區同紅圈 -->
+        </div>
+
+        <!-- 右圖 (正確圖) -->
+        <div class="image-wrapper" id="right-image">
+            <img src="correct-setup.jpg" alt="正確設定">
+            <!-- JavaScript 會喺度自動加入觸控區同紅圈 -->
+        </div>
+    </div>
+
+    <div id="status-bar">已搵到: <span id="score">0</span> / 3</div>
+
+    <div id="success-message">
+        🎉 挑戰成功！你非常 Alert，病人可以安全 Transfer！<br>
+        請向工作人員領取印花 / 進入下一關。
+    </div>
+
+    <script>
+        // 設定錯處嘅位置 (以圖片闊度/高度嘅百分比計算，例如 50% 即係正中間)
+        // 咁樣設定，無論手機打橫定打直、螢幕幾大，個點擊位都唔會走位。
+        const spots = [
+            { id: 1, x: 25, y: 40, size: 15 }, // 錯處1：例如 Oxylog 顯示燈位置 (x: 左右%, y: 上下%, size: 圓圈大小%)
+            { id: 2, x: 70, y: 80, size: 12 }, // 錯處2：例如 氧氣樽開關位置
+            { id: 3, x: 50, y: 20, size: 15 }  // 錯處3：例如 冇帶某啲藥物
+        ];
+
+        let foundCount = 0;
+        const totalSpots = spots.length;
+
+        function initGame() {
+            const leftWrapper = document.getElementById('left-image');
+            const rightWrapper = document.getElementById('right-image');
+
+            spots.forEach(spot => {
+                // 為左圖加入觸控區
+                createClickableArea(leftWrapper, spot, 'left');
+                // 為右圖加入觸控區
+                createClickableArea(rightWrapper, spot, 'right');
+            });
+        }
+
+        function createClickableArea(parent, spot, side) {
+            // 建立透明點擊區
+            const area = document.createElement('div');
+            area.className = 'clickable-area';
+            area.style.left = spot.x + '%';
+            area.style.top = spot.y + '%';
+            area.style.width = spot.size + '%';
+            // padding-bottom 用嚟保持正方形觸控區
+            area.style.paddingBottom = spot.size + '%'; 
+            
+            // 建立紅色圓圈（預設隱藏）
+            const marker = document.createElement('div');
+            marker.className = 'spot-marker spot-' + spot.id;
+            marker.style.left = spot.x + '%';
+            marker.style.top = spot.y + '%';
+            marker.style.width = spot.size + '%';
+            marker.style.paddingBottom = spot.size + '%';
+
+            // 加入點擊事件 (支援手機 touch)
+            area.addEventListener('click', function() {
+                handleSpotFound(spot.id, area);
+            });
+
+            parent.appendChild(marker);
+            parent.appendChild(area);
+        }
+
+        function handleSpotFound(spotId, clickedArea) {
+            // 顯示左右兩邊對應嘅紅圈
+            const markers = document.querySelectorAll('.spot-' + spotId);
+            let newlyFound = false;
+
+            markers.forEach(marker => {
+                if (marker.style.display !== 'block') {
+                    marker.style.display = 'block';
+                    newlyFound = true;
+                }
+            });
+
+            if (newlyFound) {
+                foundCount++;
+                document.getElementById('score').innerText = foundCount;
+                clickedArea.style.display = 'none'; // 熄咗個觸控區，費事重覆禁
+
+                // 檢查係咪搵齊
+                if (foundCount === totalSpots) {
+                    setTimeout(() => {
+                        document.getElementById('success-message').style.display = 'block';
+                    }, 300); // 延遲少少出，等用家睇到最後一個紅圈
+                }
+            }
+        }
+
+        // 啟動遊戲
+        window.onload = initGame;
+    </script>
+</body>
+</html>
