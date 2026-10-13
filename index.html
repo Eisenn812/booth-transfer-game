@@ -101,21 +101,14 @@
         🎉 挑戰成功！你非常 Alert，病人可以安全 Transfer！<br>
         請向工作人員領取印花 / 進入下一關。
     </div>
-// 臨時測試用：點擊圖片獲取準確 x, y 百分比
-document.getElementById('left-image').addEventListener('click', function(e) {
-    if(e.target.tagName !== 'IMG') return;
-    let rect = e.target.getBoundingClientRect();
-    let clickX = Math.round((e.clientX - rect.left) / rect.width * 100);
-    let clickY = Math.round((e.clientY - rect.top) / rect.height * 100);
-    alert("你點擊的位置係：\nx: " + clickX + "\ny: " + clickY);
-});
+
     <script>
         // 設定錯處嘅位置 (以圖片闊度/高度嘅百分比計算，例如 50% 即係正中間)
         // 咁樣設定，無論手機打橫定打直、螢幕幾大，個點擊位都唔會走位。
         const spots = [
-            { id: 1, x: 25, y: 40, size: 15 }, // 錯處1：例如 Oxylog 顯示燈位置 (x: 左右%, y: 上下%, size: 圓圈大小%)
-            { id: 2, x: 70, y: 80, size: 12 }, // 錯處2：例如 氧氣樽開關位置
-            { id: 3, x: 50, y: 20, size: 15 }  // 錯處3：例如 冇帶某啲藥物
+            { id: 1, x: 25, y: 15, size: 15 }, // 錯處1：例如 Oxylog 顯示燈位置 (x: 左右%, y: 上下%, size: 圓圈大小%)
+            { id: 2, x: 75, y: 80, size: 35 }, // 錯處2：例如 氧氣樽開關位置
+            { id: 3, x: 28, y: 18, size: 15 }  // 錯處3：例如 冇帶某啲藥物
         ];
 
         let foundCount = 0;
